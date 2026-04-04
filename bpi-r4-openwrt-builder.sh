@@ -35,7 +35,6 @@ echo "CONFIG_BLK_DEV_NVME=y" >> target/linux/mediatek/filogic/config-6.12
 
 \cp -r ../my_files/999-fitblk-02-w-add-bpi-r4-nvme-fitblk.patch target/linux/mediatek/patches-6.12
 
-
 \cp -r ../my_files/sms-tool/ feeds/packages/utils/sms-tool
 \cp -r ../my_files/modemdata-main/ feeds/packages/utils/modemdata 
 \cp -r ../my_files/luci-app-modemdata-main/luci-app-modemdata/ feeds/luci/applications
@@ -49,9 +48,7 @@ chmod +x files/etc/uci-defaults/99-set-hostname
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 
-mkdir -p package/utils/fitblk/files/
-\cp -r ../my_files/fit.sh package/utils/fitblk/files/fit.sh
-chmod 755 package/utils/fitblk/files/fit.sh
+\cp ../my_files/fit.sh package/utils/fitblk/files/fit.sh
 
 \cp -r ../my_files/qmi.sh package/network/utils/uqmi/files/lib/netifd/proto/
 chmod -R 755 package/network/utils/uqmi/files/lib/netifd/proto
