@@ -15,7 +15,7 @@ tar -xzf repo-cache/mtk-openwrt-feeds.tar.gz --strip-components=1 -C . --one-top
 ### tx_power check Ivan Mironov's patch - for defective BE14 boards with defective eeprom flash
 \cp -r my_files/100-wifi-mt76-mt7996-Use-tx_power-from-default-fw-if-EEP.patch mtk-openwrt-feeds/autobuild/unified/filogic/mac80211/25.12/files/package/kernel/mt76/patches
 
-\cp -r my_files/999-w-image-bpi-r4-nvme-ddr4.patch mtk-openwrt-feeds/25.12/patches-base/
+
 
 cd openwrt
 bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic prepare
@@ -26,7 +26,7 @@ bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic prepare
 \cp -r ../my_files/451-w-add-bpi-r4-nvme.patch package/boot/uboot-mediatek/patches/451-add-bpi-r4-nvme.patch
 \cp ../my_files/452-w-add-bpi-r4-nvme-rfb.patch package/boot/uboot-mediatek/patches/452-add-bpi-r4-nvme-rfb.patch
 \cp ../my_files/454-w-add-bpi-r4-nvme-env.patch package/boot/uboot-mediatek/patches/454-add-bpi-r4-nvme-env.patch
-\cp -r ../my_files/w-sd-nand-mmc-nvme-comb-filogic.mk target/linux/mediatek/image/filogic.mk
+\cp -r ../my_files/w-filogic-bpi-r4-universal.mk target/linux/mediatek/image/filogic.mk
 
 echo "CONFIG_BLK_DEV_NVME=y" >> target/linux/mediatek/filogic/config-6.12
 
@@ -57,6 +57,6 @@ chmod -R 755 feeds/packages/utils/modemdata/files/usr/share
 make defconfig
 
 
-bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic build
+bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic build -j$(nproc)
 
 exit
