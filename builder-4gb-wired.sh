@@ -56,6 +56,13 @@ chmod -R 755 feeds/packages/utils/modemdata/files/usr/share
 
 
 
+
+
+
+
+
+\cp -r ../configs/my_defconfig-wired .config
+
 echo "CONFIG_PACKAGE_kmod-iosm=y" >> .config
 echo "CONFIG_PACKAGE_xmm7360-fcc-unlock=y" >> .config
 echo "CONFIG_PACKAGE_kmod-usb-serial=y" >> .config
@@ -77,10 +84,6 @@ echo "CONFIG_PACKAGE_modemmanager-rpcd=y" >> .config
 echo "CONFIG_PACKAGE_luci-proto-modemmanager=y" >> .config
 echo "CONFIG_PACKAGE_fcc-unlock-fibocom-l850=y" >> .config
 
-
-
-
-\cp -r ../configs/my_defconfig-wired .config
 make defconfig
 
  
