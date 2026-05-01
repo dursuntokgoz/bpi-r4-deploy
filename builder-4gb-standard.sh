@@ -51,6 +51,32 @@ chmod -R 755 feeds/luci/applications/luci-app-sms-tool-js/root
 chmod -R 755 feeds/packages/utils/modemdata/files/usr/share
 
 \cp -r ../configs/my_defconfig-4gb-standard .config
+
+
+
+echo "CONFIG_PACKAGE_kmod-iosm=y" >> .config
+echo "CONFIG_PACKAGE_xmm7360-fcc-unlock=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-serial=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-net=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-serial-wwan=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-serial-option=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y" >> .config
+echo "CONFIG_PACKAGE_umbim=y" >> .config
+echo "CONFIG_PACKAGE_uqmi=y" >> .config
+echo "CONFIG_PACKAGE_libmbim=y" >> .config
+echo "CONFIG_PACKAGE_libqmi=y" >> .config
+echo "CONFIG_PACKAGE_luci-proto-mbim=y" >> .config
+echo "CONFIG_PACKAGE_luci-proto-qmi=y" >> .config
+echo "CONFIG_PACKAGE_modemmanager=y" >> .config
+echo "CONFIG_PACKAGE_modemmanager-rpcd=y" >> .config
+echo "CONFIG_PACKAGE_luci-proto-modemmanager=y" >> .config
+echo "CONFIG_PACKAGE_fcc-unlock-fibocom-l850=y" >> .config
+
+
+
 make defconfig
 
 
