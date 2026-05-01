@@ -4,7 +4,7 @@
 
 EMMC_DEV="/dev/mmcblk0"
 EMMC_BOOT="/dev/mmcblk0boot0"
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -121,7 +121,7 @@ case "$USE_LOCAL" in
     *)
         printf "\n"
         printf "  Use default release or your own fork?\n"
-        printf "  [1] Default (woziwrt/bpi-r4-deploy)\n"
+        printf "  [1] Default (dursuntokgoz/bpi-r4-deploy)\n"
         printf "  [2] My fork (same repo name, different username)\n"
         printf "\n"
         printf "  Select [1/2]: "

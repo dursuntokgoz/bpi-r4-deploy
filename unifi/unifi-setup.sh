@@ -7,13 +7,13 @@ NVME_PROTECT="/mnt/nvme0n1p4"
 COMPOSE_DIR="$NVME_DATA/unifi-protect"
 IMAGE_TAR="$NVME_DATA/unifi-protect-dciancu.tar.gz"
 IMAGE_NAME="dciancu/unifi-protect-unvr-docker-arm64:stable"
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 GH_TAG="release-8gb-wired-unifi"
 BASE_URL="https://github.com/${GH_USER}/${GH_REPO}/releases/download/${GH_TAG}"
 
 # Docker image is still downloaded from bpi-r4-unifi (large file, separate repo)
-IMAGE_GH_USER="woziwrt"
+IMAGE_GH_USER="dursuntokgoz"
 IMAGE_GH_REPO="bpi-r4-unifi"
 IMAGE_GH_TAG="release-nvme-unifi"
 

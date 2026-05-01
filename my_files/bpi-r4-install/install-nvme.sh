@@ -3,7 +3,7 @@
 # Run from NAND rescue system
 
 NVME_DEV="/dev/nvme0n1"
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -192,7 +192,7 @@ case "$USE_LOCAL" in
         ;;
     *)
         printf "\n  Use default release or your own fork?\n"
-        printf "  [1] Default (woziwrt/bpi-r4-deploy)\n"
+        printf "  [1] Default (dursuntokgoz/bpi-r4-deploy)\n"
         printf "  [2] My fork (same repo name, different username)\n\n"
         printf "  Select [1/2]: "
         read USE_FORK
