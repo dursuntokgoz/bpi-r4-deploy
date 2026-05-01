@@ -213,3 +213,37 @@ jobs:
           files: artifacts-poe/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Report build success
+        if: success()
+        run: |
+          echo "## Build Successful! :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+          echo "RAM: ${{ github.event.inputs.ram }} | Variant: ${{ github.event.inputs.variant }}" >> $GITHUB_STEP_SUMMARY
+          echo "The build was completed and published successfully." >> $GITHUB_STEP_SUMMARY
+
+      - name: Handle build failure
+        if: failure()
+        run: |
+          echo "## Build Failed! :x:" >> $GITHUB_STEP_SUMMARY
+          echo "RAM: ${{ github.event.inputs.ram }} | Variant: ${{ github.event.inputs.variant }}" >> $GITHUB_STEP_SUMMARY
+          echo "The build process encountered an error. Collecting logs..." >> $GITHUB_STEP_SUMMARY
+          
+          mkdir -p failure-logs
+          
+          # Collect OpenWrt logs if they exist
+          if [ -d openwrt/logs ]; then
+            cp -r openwrt/logs/* failure-logs/
+          fi
+          
+          # Find any other log files in the build directory
+          find openwrt -name "*.log" -exec cp --parents {} failure-logs/ \; 2>/dev/null || true
+          
+          echo "Logs collected. Check the 'failure-logs' artifact for details." >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-logs-${{ github.event.inputs.ram }}-${{ github.event.inputs.variant }}
+          path: failure-logs/
+          retention-days: 7
