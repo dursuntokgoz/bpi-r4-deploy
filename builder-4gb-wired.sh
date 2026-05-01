@@ -53,8 +53,6 @@ chmod -R 755 feeds/luci/applications/luci-app-modemdata/root
 chmod -R 755 feeds/luci/applications/luci-app-sms-tool-js/root
 chmod -R 755 feeds/packages/utils/modemdata/files/usr/share
 
-\cp -r ../configs/my_defconfig-wired .config
-make defconfig
 
 
 
@@ -80,6 +78,12 @@ echo "CONFIG_PACKAGE_luci-proto-modemmanager=y" >> .config
 echo "CONFIG_PACKAGE_fcc-unlock-fibocom-l850=y" >> .config
 
 
+
+
+\cp -r ../configs/my_defconfig-wired .config
+make defconfig
+
+ 
 bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic build -j$(nproc)
 
 exit
