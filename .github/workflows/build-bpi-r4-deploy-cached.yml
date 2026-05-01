@@ -10,7 +10,6 @@ on:
         type: choice
         options:
           - 4gb
-          - 8gb
       variant:
         description: 'Build variant'
         required: true
@@ -149,11 +148,7 @@ jobs:
           FILOGIC="openwrt/bin/targets/mediatek/filogic"
           mkdir -p artifacts-non-poe
 
-          if [ "$RAM" = "8gb" ]; then
-            cp rescue/bpi-r4-rescue-sdcard.8gb.img.gz artifacts-non-poe/
-          else
-            cp rescue/bpi-r4-rescue-sdcard.img.gz artifacts-non-poe/
-          fi
+          cp rescue/bpi-r4-rescue-sdcard.img.gz artifacts-non-poe/
 
           cp ${FILOGIC}/openwrt-mediatek-filogic-bananapi_bpi-r4-squashfs-sysupgrade.itb artifacts-non-poe/bpi-r4.itb
           cp ${FILOGIC}/openwrt-mediatek-filogic-bananapi_bpi-r4-nvme-img.bin artifacts-non-poe/
@@ -175,11 +170,7 @@ jobs:
           FILOGIC="openwrt/bin/targets/mediatek/filogic"
           mkdir -p artifacts-poe
 
-          if [ "$RAM" = "8gb" ]; then
-            cp rescue/bpi-r4-rescue-sdcard.8gb.img.gz artifacts-poe/
-          else
-            cp rescue/bpi-r4-rescue-sdcard.img.gz artifacts-poe/
-          fi
+          cp rescue/bpi-r4-rescue-sdcard.img.gz artifacts-poe/
 
           cp ${FILOGIC}/openwrt-mediatek-filogic-bananapi_bpi-r4-poe-squashfs-sysupgrade.itb artifacts-poe/bpi-r4-poe.itb
           cp ${FILOGIC}/openwrt-mediatek-filogic-bananapi_bpi-r4-poe-nvme-img.bin artifacts-poe/
