@@ -63,6 +63,7 @@ chmod -R 755 feeds/packages/utils/modemdata/files/usr/share
 
 \cp -r ../configs/my_defconfig-wired .config
 
+echo "CONFIG_PACKAGE_lua-cjson=y" >> .config
 echo "CONFIG_PACKAGE_kmod-iosm=y" >> .config
 echo "CONFIG_PACKAGE_xmm7360-fcc-unlock=y" >> .config
 echo "CONFIG_PACKAGE_kmod-usb-serial=y" >> .config
