@@ -55,12 +55,6 @@ chmod -R 755 feeds/luci/applications/luci-app-sms-tool-js/root
 chmod -R 755 feeds/packages/utils/modemdata/files/usr/share
 
 \cp -r ../configs/my_defconfig-universal .config
-make defconfig
-
-echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-emmc-comb-4bg=y" >> .config
-echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-sdmmc-comb-4bg=y" >> .config
-echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-spim-nand-ubi-comb-4bg=y" >> .config
-
 
 echo "CONFIG_PACKAGE_kmod-iosm=y" >> .config
 echo "CONFIG_PACKAGE_xmm7360-fcc-unlock=y" >> .config
@@ -82,6 +76,15 @@ echo "CONFIG_PACKAGE_modemmanager=y" >> .config
 echo "CONFIG_PACKAGE_modemmanager-rpcd=y" >> .config
 echo "CONFIG_PACKAGE_luci-proto-modemmanager=y" >> .config
 echo "CONFIG_PACKAGE_fcc-unlock-fibocom-l850=y" >> .config
+
+
+
+make defconfig
+
+echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-emmc-comb-4bg=y" >> .config
+echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-sdmmc-comb-4bg=y" >> .config
+echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-spim-nand-ubi-comb-4bg=y" >> .config
+
 
 
 bash ../mtk-openwrt-feeds/autobuild/unified/autobuild.sh filogic-mac80211-mt798x_rfb-wifi7_nic build -j$(nproc)
