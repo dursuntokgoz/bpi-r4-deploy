@@ -68,6 +68,29 @@ echo "CONFIG_PACKAGE_smstools3=y" >> .config
 echo "CONFIG_PACKAGE_luci-app-smstools3=y" >> .config
 
 
+
+echo "CONFIG_PACKAGE_luci-proto-xmm=y" >> .config
+echo "CONFIG_PACKAGE_xmm-modem=y" >> .config
+echo "CONFIG_PACKAGE_modeminfo=y" >> .config
+echo "CONFIG_PACKAGE_luci-app-modeminfo=y" >> .config
+echo "CONFIG_PACKAGE_modeminfo-serial-xmm=y" >> .config
+echo "CONFIG_PACKAGE_modeminfo-serial-fibocom=y" >> .config
+echo "CONFIG_PACKAGE_atinout=y" >> .config
+echo "CONFIG_PACKAGE_luci-app-atinout=y" >> .config
+echo "CONFIG_PACKAGE_sms-tool=y" >> .config
+echo "CONFIG_PACKAGE_luci-app-sms-tool-js=y" >> .config
+echo "CONFIG_PACKAGE_luci-app-modemband=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-acm=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-net-huawei-cdc-ncm=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-serial=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-serial-option=y" >> .config
+echo "CONFIG_PACKAGE_kmod-usb-wdm=y" >> .config
+echo "CONFIG_PACKAGE_umbim=y" >> .config
+echo "CONFIG_PACKAGE_comgt-ncm=y" >> .config
+echo "CONFIG_PACKAGE_picocom=y" >> .config
+echo "CONFIG_PACKAGE_wget-ssl=y" >> .config
+
 make defconfig
 
 echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-emmc-comb-4bg=y" >> .config
