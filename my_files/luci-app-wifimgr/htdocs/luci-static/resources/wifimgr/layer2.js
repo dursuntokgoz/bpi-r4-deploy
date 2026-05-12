@@ -252,9 +252,13 @@ async function system_set_txpower_mode(mode) {
         if (mode === 'efuse_max') {
             write.sku_idx = null;   // delete — driver uses eFuse max directly
             write.txpower = null;
+            write.lpi_sku_idx = null;
         } else {
             write.sku_idx = '0';    // regdb or manual: SKU table must be active
-            if (mode !== 'manual') write.txpower = null;
+            if (mode !== 'manual') {
+                write.txpower = null;
+                write.lpi_sku_idx = null;
+            }
         }
         const res = await layer1.uci_write('wireless', rid, write);
         if (!res.ok) { errors.push('uci_write failed: ' + rid); break; }
@@ -1242,6 +1246,10 @@ async function relayd_remove() {
     return layer1.relayd_remove();
 }
 
+async function repeater_fw_remove() {
+    return layer1.fw_wan_remove_network('wwan');
+}
+
 async function relayd_get() {
     const res = await layer1.uci_read('network');
     if (!res.ok) return l2ok({ active: false, uplink_net: null });
@@ -1271,7 +1279,7 @@ const Layer2 = {
     // system
     system_get_info, system_apply, system_apply_poll, system_all_up, system_get_logs, system_get_txpower_info,
     // relayd
-    relayd_setup, relayd_remove, relayd_get
+    relayd_setup, relayd_remove, relayd_get, repeater_fw_remove
 };
 
 return baseclass.extend(Layer2);

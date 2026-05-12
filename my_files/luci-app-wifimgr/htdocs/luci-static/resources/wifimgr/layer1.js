@@ -288,6 +288,40 @@ async function uci_ensure_network_iface(name) {
     }
 }
 
+async function fw_wan_add_network(name) {
+    if (hwBusy) return busy();
+    hwBusy = true;
+    try {
+        const zone = await fs.exec('/bin/sh', ['-c',
+            `/sbin/uci show firewall | grep -m1 "\\.name='wan'" | sed "s/\\.name.*//"`
+        ]);
+        const z = zone.stdout && zone.stdout.trim();
+        if (!z) { hwBusy = false; return mkErr('fw_wan_zone_not_found'); }
+        const res = await fs.exec('/bin/sh', ['-c',
+            `/sbin/uci add_list '${z}.network=${name}' && /sbin/uci commit firewall && /etc/init.d/firewall reload`
+        ]);
+        hwBusy = false;
+        return res.code === 0 ? ok(null) : mkErr('exec_failed');
+    } catch(e) { hwBusy = false; return mkErr('exec_failed'); }
+}
+
+async function fw_wan_remove_network(name) {
+    if (hwBusy) return busy();
+    hwBusy = true;
+    try {
+        const zone = await fs.exec('/bin/sh', ['-c',
+            `/sbin/uci show firewall | grep -m1 "\\.name='wan'" | sed "s/\\.name.*//"`
+        ]);
+        const z = zone.stdout && zone.stdout.trim();
+        if (!z) { hwBusy = false; return ok(null); }
+        const res = await fs.exec('/bin/sh', ['-c',
+            `/sbin/uci -q del_list '${z}.network=${name}'; /sbin/uci commit firewall && /etc/init.d/firewall reload`
+        ]);
+        hwBusy = false;
+        return res.code === 0 ? ok(null) : mkErr('exec_failed');
+    } catch(e) { hwBusy = false; return mkErr('exec_failed'); }
+}
+
 async function uci_reorder(config, section, position) {
     if (hwBusy) return busy();
     hwBusy = true;
@@ -876,6 +910,8 @@ const Layer1 = {
     uci_ensure_network_iface,
     relayd_setup,
     relayd_remove,
+    fw_wan_add_network,
+    fw_wan_remove_network,
     uci_reorder,
     uci_delete,
     uci_list_add,

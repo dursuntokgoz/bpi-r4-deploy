@@ -421,8 +421,8 @@ function applyFlow(container, fn, onDone, lockFn) {
             clearInterval(timer);
             if (lockFn) lockFn(true);
             progress.style.display = 'none';
-            container.appendChild(inlineErr('Timeout — try: 1) reboot  2) power cycle'));
-        }, 180000);
+            container.appendChild(inlineErr('WiFi restart is taking longer than expected (DFS?) — check Networks tab. If nothing appeared, reboot.'));
+        }, 240000);
 
     }).catch(function(e) {
         spinner.style.display = 'none';
@@ -499,9 +499,6 @@ function wizardAP(onDone) {
         };
         var chanSel  = selectEl(CHAN_OPTS.radio1, 'auto');
         var widthSel = selectEl(WIDTH_OPTS.radio1, 'auto');
-        var txSel    = selectEl([['auto','Auto (regulatory)'],['manual','Manual']], 'auto');
-        var txpIn    = inputField('20', 'dBm');
-        txpIn.style.display = 'none'; txpIn.style.width = '70px';
         var ifaceSel = networkSel('lan');
         var isoIn    = checkbox(false);
         var hidIn    = checkbox(false);
@@ -523,14 +520,11 @@ function wizardAP(onDone) {
             eOpts.forEach(function(o) { encSel.appendChild(node('option', { value: o[0] }, o[1])); });
             dfsNote.style.display = radioSel.value === 'radio1' ? '' : 'none';
         };
-        txSel.onchange = function() { txpIn.style.display = txSel.value === 'manual' ? '' : 'none'; };
-
         var advBody = node('div', { style: 'margin-top:4px' });
         advBody.appendChild(formRow('Radio', radioSel));
         advBody.appendChild(dfsNote);
         advBody.appendChild(formRow('Channel', chanSel));
         advBody.appendChild(formRow('Width', widthSel));
-        advBody.appendChild(formRow('TX power', node('div', { style: 'display:flex;align-items:center;gap:6px' }, txSel, txpIn, sp('dBm', 'color:#888;font-size:12px'))));
         advBody.appendChild(formRow('Network', ifaceSel));
         advBody.appendChild(formRow('Isolate clients', isoIn));
         advBody.appendChild(sp('Blocks direct traffic between connected clients — useful for guest networks.', 'color:#555;font-size:11px;display:block;margin:-4px 0 4px'));
@@ -555,7 +549,6 @@ function wizardAP(onDone) {
                 var rp = {};
                 if (chanSel.value  !== 'auto') rp.channel = chanSel.value;
                 if (widthSel.value !== 'auto') rp.htmode  = 'EHT' + widthSel.value;
-                if (txSel.value === 'manual')  { rp.sku_idx = '0'; rp.txpower = txpIn.value; }
                 var radioPromise = Object.keys(rp).length
                     ? layer2.radio_set(rid, rp)
                     : Promise.resolve({ ok: true, errors: [] });
@@ -617,14 +610,10 @@ function wizardMLO(onDone) {
             var rid = pair[0], label = pair[1];
             var cSel = selectEl(CHAN_MLO[rid], 'auto');
             var wSel = selectEl([['auto','auto'],['20','20 MHz'],['40','40 MHz'],['80','80 MHz'],['160','160 MHz']], 'auto');
-            var tSel = selectEl([['auto','Auto'],['manual','Manual']], 'auto');
-            var tIn  = inputField('20', 'dBm'); tIn.style.display = 'none'; tIn.style.width = '70px';
-            tSel.onchange = function() { tIn.style.display = tSel.value === 'manual' ? '' : 'none'; };
             advBody.appendChild(node('div', { style: 'color:#aaa;font-size:12px;margin:8px 0 4px;font-weight:bold' }, label));
             advBody.appendChild(formRow('Channel', cSel));
             advBody.appendChild(formRow('Width', wSel));
-            advBody.appendChild(formRow('TX power', node('div', { style: 'display:flex;align-items:center;gap:6px' }, tSel, tIn, sp('dBm', 'color:#888;font-size:12px'))));
-            linkControls[rid] = { chanSel: cSel, widthSel: wSel, txSel: tSel, txIn: tIn };
+            linkControls[rid] = { chanSel: cSel, widthSel: wSel };
         });
 
         var ifaceSel    = networkSel('lan');
@@ -647,18 +636,17 @@ function wizardMLO(onDone) {
             if (emlDisableIn.checked) p.eml_disable = '1';
 
             applyFlow(applyDiv, function() {
-                // Apply per-link radio settings (channel, width, TX power)
-                var radioPromises = rids.map(function(rid) {
-                    var lc = linkControls[rid];
-                    var rp = {};
-                    if (lc.chanSel.value !== 'auto')  rp.channel = lc.chanSel.value;
-                    if (lc.widthSel.value !== 'auto') rp.htmode  = 'EHT' + lc.widthSel.value;
-                    if (lc.txSel.value === 'manual')  { rp.sku_idx = '0'; rp.txpower = lc.txIn.value; }
-                    return Object.keys(rp).length ? layer2.radio_set(rid, rp) : Promise.resolve({ ok: true, errors: [] });
-                });
-                return Promise.all(radioPromises).then(function(results) {
-                    var failed = results.find(function(r) { return !r.ok; });
-                    if (failed) return { ok: false, errors: failed.errors || ['Radio set failed'], restartRequired: 'none' };
+                return rids.reduce(function(chain, rid) {
+                    return chain.then(function(prev) {
+                        if (!prev.ok) return prev;
+                        var lc = linkControls[rid];
+                        var rp = {};
+                        if (lc.chanSel.value !== 'auto')  rp.channel = lc.chanSel.value;
+                        if (lc.widthSel.value !== 'auto') rp.htmode  = 'EHT' + lc.widthSel.value;
+                        return Object.keys(rp).length ? layer2.radio_set(rid, rp) : Promise.resolve({ ok: true, errors: [] });
+                    });
+                }, Promise.resolve({ ok: true, errors: [] })).then(function(last) {
+                    if (!last.ok) return { ok: false, errors: last.errors || ['Radio set failed'], restartRequired: 'none' };
                     return layer3.wizard_mlo(rids, p);
                 });
             }, function() { close(); if (onDone) onDone(); }, setCloseable);
@@ -674,17 +662,17 @@ function wizardStation(onDone) {
         var ssidIn   = inputField('', 'Upstream SSID');
         var passIn   = inputField('', 'Password', 'password');
         var mloCb    = checkbox(false);
-        var bandSel  = selectEl([['radio0','2.4 GHz'],['radio1','5 GHz'],['radio2','6 GHz']], 'radio1');
-        var assocSel = selectEl([['1','5 GHz (recommended)'],['0','2.4 GHz'],['2','6 GHz']], '1');
+        var bandSel  = selectEl([['radio0','2.4 GHz'],['radio1','5 GHz']], 'radio1');
+        var assocSel = selectEl([['1','5 GHz'],['0','2.4 GHz']], '1');
         var applyDiv = node('div', {});
 
         var mloRow   = formRow('MLO', mloCb);
         var mloHint  = sp('WiFi 7 multi-band connection — requires an active MLO AP on the other router.', 'color:#555;font-size:11px;display:block;margin:-4px 0 4px');
+        var mloConflictNote = node('div', { style: 'color:#e53935;font-size:11px;margin-top:3px;display:none' },
+            'Cannot add MLO STA — a local MLO AP is active on the same radios. Remove it first (Networks tab).');
         var assocRow = formRow('Assoc band', assocSel);
         assocRow.style.display = 'none';
         var bandRow  = formRow('Band', bandSel);
-        var r2Note   = node('div', { style: 'color:#f5a623;font-size:11px;margin-top:3px;display:none' },
-            '6 GHz STA cannot associate while a 3-band MLO AP is active on the same router');
 
         var scanErrDiv = node('div', {});
         var scanBtn = btnSecondary('Scan', function() {
@@ -785,24 +773,17 @@ function wizardStation(onDone) {
         body.appendChild(formRow('Password', pwdWrap(passIn)));
         body.appendChild(mloRow);
         body.appendChild(mloHint);
+        body.appendChild(mloConflictNote);
         body.appendChild(assocRow);
         body.appendChild(bandRow);
-        body.appendChild(r2Note);
-
-        function updateBandNote() {
-            var is6g = !mloCb.checked && bandSel.value === 'radio2';
-            var hasMloOn6g = is6g && _data && (_data.mlds || []).some(function(m) {
-                return (m.radios || []).indexOf('radio2') >= 0;
-            });
-            r2Note.style.display = hasMloOn6g ? 'block' : 'none';
-        }
-        updateBandNote();
 
         mloCb.addEventListener('change', function() {
             var mlo = mloCb.checked;
             assocRow.style.display = mlo ? '' : 'none';
             bandRow.style.display  = mlo ? 'none' : '';
-            updateBandNote();
+            var hasLocalMloAp = mlo && (_data.mlds || []).some(function(m) { return m.mode === 'ap'; });
+            mloConflictNote.style.display = hasLocalMloAp ? 'block' : 'none';
+            goBtn.disabled = hasLocalMloAp;
         });
 
         var ipSel    = selectEl([['dhcp','DHCP'],['static','Static']], 'dhcp');
@@ -810,8 +791,7 @@ function wizardStation(onDone) {
         var bssidIn  = inputField('', 'AA:BB:CC:DD:EE:FF');
         var STA_ENC_OPTS = {
             radio0: [['auto','auto'],['sae-mixed','WPA2/WPA3'],['sae','WPA3'],['psk2','WPA2'],['none','Open']],
-            radio1: [['auto','auto'],['sae-mixed','WPA2/WPA3'],['sae','WPA3'],['psk2','WPA2'],['none','Open']],
-            radio2: [['sae','WPA3'],['owe','OWE (open secure)']]
+            radio1: [['auto','auto'],['sae-mixed','WPA2/WPA3'],['sae','WPA3'],['psk2','WPA2'],['none','Open']]
         };
         var encSel   = selectEl(STA_ENC_OPTS.radio1, 'auto');
         var wdsCb    = checkbox(false);
@@ -1391,8 +1371,10 @@ function netRow(type, iface, data, cliCount, country, isLast) {
         applyFlow(applyDiv, function() {
             var isRelaydUplink = !is_mld && data.relayd && data.relayd.active &&
                 iface.network && iface.network === data.relayd.uplink_net;
+            var isRepeaterSta = !is_mld && iface.repeater && iface.mode === 'sta';
             var prom = is_mld ? layer2.mld_remove(sid) : layer2.iface_remove(sid);
             if (isRelaydUplink) prom = prom.then(function() { return layer2.relayd_remove(); });
+            if (isRepeaterSta) prom = prom.then(function() { return layer2.repeater_fw_remove(); });
             return prom.then(function(r) { return Object.assign({ restartRequired: 'wifi' }, r); });
         }, _onApplied);
     });
@@ -1586,7 +1568,6 @@ function netRow(type, iface, data, cliCount, country, isLast) {
             var apChVal = apRadio ? (apRadio.channel === 'auto' || apRadio.channel == null ? 'auto' : String(apRadio.channel)) : 'auto';
             var apChIn  = inputField(apChVal, 'auto or number');
             var apHtIn  = selectEl(apHtOpts, apRadio ? apRadio.htmode : null);
-            var apTxIn  = inputField(apRadio && apRadio.txpower_uci != null ? String(apRadio.txpower_uci) : '', 'auto');
             defs = [
                 { label: 'SSID',             key: 'ssid',      type: 'text',     val: ssid },
                 { label: 'Password',         key: 'key',       type: 'password', val: iface.key || '' },
@@ -1627,7 +1608,6 @@ function netRow(type, iface, data, cliCount, country, isLast) {
             if (apBand === 'radio1') apChWrap.appendChild(sp('DFS (CAC ~60s): 52–144', 'display:block;color:#555;font-size:11px;margin-top:3px'));
             b.appendChild(formRow('Channel', apChWrap));
             b.appendChild(formRow('Channel width', apHtIn));
-            b.appendChild(formRow('TX power (dBm)', apTxIn));
         }
 
         var saveBtn = btn('Save', null, function() {
@@ -1644,7 +1624,6 @@ function netRow(type, iface, data, cliCount, country, isLast) {
                 var ifaceProm = is_mld ? layer2.mld_set(sid, p) : layer2.iface_set(sid, p);
                 if (iface.mode === 'ap' && apRadio) {
                     var rp = { channel: apChIn.value.trim() || 'auto', htmode: apHtIn.value };
-                    if (apTxIn.value.trim()) rp.txpower = apTxIn.value.trim();
                     return layer2.radio_set(apRadio.id, rp).then(function(rr) {
                         if (!rr.ok) return Object.assign({ restartRequired: 'none' }, rr);
                         return ifaceProm.then(function(r) { return Object.assign({ restartRequired: r.ok ? 'wifi' : 'none' }, r); });
