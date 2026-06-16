@@ -504,3 +504,5 @@ CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_bananapi_bpi-r4-poe-8gb=y
 CONFIG_TARGET_DEVICE_PACKAGES_mediatek_filogic_DEVICE_bananapi_bpi-r4-poe-8gb=""
 CONFIG_PACKAGE_kmod-xmm7360=y
 CONFIG_PACKAGE_kmod-wwan-iosm=y
+CONFIG_PACKAGE_python3=y
+CONFIG_PACKAGE_python3-light=y
