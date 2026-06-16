@@ -9,6 +9,7 @@ include $(INCLUDE_DIR)/package.mk
 define KernelPackage/iosm-custom
   SUBMENU:=Network Devices
   TITLE:=Intel IPC over Shared Memory driver (custom)
+  DEPENDS:=+kmod-wwan
   FILES:=$(PKG_BUILD_DIR)/iosm.ko
   AUTOLOAD:=$(call AutoLoad,50,iosm)
 endef

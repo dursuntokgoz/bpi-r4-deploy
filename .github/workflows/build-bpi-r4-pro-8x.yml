@@ -128,11 +128,22 @@ jobs:
       - name: Run builder script
         run: |
           chmod +x ${{ env.BUILDER }}
-          ${{ env.BUILDER }}
+          ${{ env.BUILDER }} 2>&1 | tee build_log.txt
+          exit ${PIPESTATUS[0]}
         env:
           OPENWRT_COMMIT: ${{ env.OPENWRT_COMMIT }}
           MTK_COMMIT: ${{ env.MTK_COMMIT }}
           MTK_FEED_TARBALL: repo-cache/mtk-openwrt-feeds.tar.gz
+
+      - name: Print Build Failure Details
+        if: failure()
+        run: |
+          echo "### ❌ Build Failed!" >> $GITHUB_STEP_SUMMARY
+          echo "Here are the files or packages that caused the failure:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          grep -iE "error: package/.*failed to build|make\[.*\]: \*\*\* .* error [0-9]" build_log.txt | tail -n 20 >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Prepare release artifacts
         run: |
