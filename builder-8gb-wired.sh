@@ -35,6 +35,10 @@ echo "CONFIG_BLK_DEV_NVME=y" >> target/linux/mediatek/filogic/config-6.12
 \cp -r ../my_files/luci-app-sms-tool-js-main/luci-app-sms-tool-js/ feeds/luci/applications
 
 mkdir -p files/etc/uci-defaults
+mkdir -p files/usr/bin
+\cp ../my_files/99-xmm2usb files/usr/bin/xmm2usb
+chmod +x files/usr/bin/xmm2usb
+\cp -r ../my_files/xmm7360-pci package/kernel/
 \cp -r ../my_files/99-set-hostname files/etc/uci-defaults/
 chmod +x files/etc/uci-defaults/99-set-hostname
 
