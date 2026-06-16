@@ -45,7 +45,7 @@ mkdir -p files/usr/bin
 chmod +x files/usr/bin/xmm2usb
 \cp ../my_files/99-xmm7360-daemon-full.py files/usr/bin/xmm7360-daemon-full.py
 chmod +x files/usr/bin/xmm7360-daemon-full.py
-\cp -r ../my_files/xmm7360-pci package/kernel/
+
 \cp -r ../my_files/99-set-hostname files/etc/uci-defaults/
 chmod +x files/etc/uci-defaults/99-set-hostname
 
