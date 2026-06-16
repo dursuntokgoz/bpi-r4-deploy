@@ -5,7 +5,7 @@
 
 NVME_DATA="/mnt/nvme0n1p3"
 NETWORK_DIR="$NVME_DATA/unifi-network"
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 
 ENP0S3_MAC="00:50:43:ba:d0:02"

@@ -3,7 +3,7 @@
 # Run from NAND rescue system
 
 NVME_DEV="/dev/nvme0n1"
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
