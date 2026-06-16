@@ -499,6 +499,7 @@ CONFIG_WPA_MSG_MIN_PRIORITY=2
 CONFIG_TARGET_DEVICE_mediatek_filogic_DEVICE_bananapi_bpi-r4-pro=y
 CONFIG_TARGET_DEVICE_PACKAGES_mediatek_filogic_DEVICE_bananapi_bpi-r4-pro=""
 
-CONFIG_PACKAGE_kmod-wwan-iosm=y
+
 CONFIG_PACKAGE_python3=y
 CONFIG_PACKAGE_python3-light=y
+CONFIG_PACKAGE_kmod-iosm-custom=y

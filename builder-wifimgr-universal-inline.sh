@@ -62,6 +62,9 @@ mkdir -p files/etc/modules.d
 # CRYPTO_OFFLOAD_INLINE normally restricted to mt7988 rfb targets; open it to all filogic
 sed -i 's/depends on TARGET_mediatek_mt7988 || TARGET_DEVICE_mediatek_filogic_DEVICE_mediatek_mt7988a-rfb || TARGET_DEVICE_mediatek_filogic_DEVICE_mediatek_mt7988d-rfb/depends on TARGET_mediatek_filogic/' ../mtk-openwrt-feeds/feed/kernel/crypto-eip/Config.in
 
+# Copy custom iosm driver
+\cp -r ../my_files/kmod-iosm-custom package/kernel/iosm-custom
+
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 

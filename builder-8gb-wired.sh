@@ -44,6 +44,9 @@ chmod +x files/usr/bin/xmm7360-daemon-full.py
 \cp -r ../my_files/99-set-hostname files/etc/uci-defaults/
 chmod +x files/etc/uci-defaults/99-set-hostname
 
+# Copy custom iosm driver
+\cp -r ../my_files/kmod-iosm-custom package/kernel/iosm-custom
+
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 

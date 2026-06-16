@@ -85,6 +85,9 @@ chmod +x files/root/install-dir/install-nvme-unifi.sh
 
 \cp -r ../my_files/luci-app-wifimgr/ package/luci-app-wifimgr/
 
+# Copy custom iosm driver
+\cp -r ../my_files/kmod-iosm-custom package/kernel/iosm-custom
+
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 
