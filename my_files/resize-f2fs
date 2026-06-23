@@ -1,0 +1,16 @@
+#!/bin/sh /etc/rc.common
+START=11
+
+start() {
+    MARKER=/etc/.overlay_resized
+
+    [ -f "$MARKER" ] && return 0
+
+    for PART in $(blkid | grep -i 'f2fs' | awk -F':' '{print $1}'); do
+        if resize.f2fs "$PART" 2>/dev/null; then
+            logger -t resize_f2fs "Partition $PART resized successfully"
+        fi
+    done
+
+    touch "$MARKER"
+}

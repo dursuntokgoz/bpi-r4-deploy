@@ -46,6 +46,11 @@ echo "CONFIG_BLK_DEV_NVME=y" >> target/linux/mediatek/filogic/config-6.12
 \cp -r ../my_files/luci-app-wifimgr feeds/luci/applications/luci-app-wifimgr
 
 mkdir -p files/etc/uci-defaults
+mkdir -p files/etc/init.d
+mkdir -p files/etc/rc.d
+\cp ../my_files/resize-f2fs files/etc/init.d/resize-f2fs
+chmod +x files/etc/init.d/resize-f2fs
+ln -sf ../init.d/resize-f2fs files/etc/rc.d/S11resize-f2fs
 mkdir -p files/usr/bin
 \cp ../my_files/99-xmm2usb files/usr/bin/xmm2usb
 chmod +x files/usr/bin/xmm2usb
