@@ -2,15 +2,40 @@
 START=11
 
 start() {
-    MARKER=/etc/.overlay_resized
+    FS_MARKER=/etc/.overlay_resized
+    PART_MARKER=/etc/.partition_expanded
 
-    [ -f "$MARKER" ] && return 0
+    [ -f "$FS_MARKER" ] && return 0
+
+    if [ ! -f "$PART_MARKER" ]; then
+        local DISK_MODIFIED=0
+        for DISK in /dev/mmcblk0 /dev/nvme0n1; do
+            if [ -b "$DISK" ]; then
+                LAST_PART=$(parted -sm "$DISK" print 2>/dev/null | awk -F: '/^[0-9]+/ {print $1}' | tail -n1)
+                if [ -n "$LAST_PART" ]; then
+                    logger -t resize_f2fs "Resizing partition $LAST_PART on $DISK"
+                    parted -s "$DISK" resizepart "$LAST_PART" 100% 2>/dev/null
+                    DISK_MODIFIED=1
+                fi
+            fi
+        done
+        
+        touch "$PART_MARKER"
+        
+        # Sadece marker basariyla olusturulduysa reboot at (sonsuz donguyu onlemek icin)
+        if [ "$DISK_MODIFIED" = "1" ] && [ -f "$PART_MARKER" ]; then
+            logger -t resize_f2fs "Partitions expanded. Rebooting to apply changes for fitblk."
+            sync
+            reboot
+            return 0
+        fi
+    fi
 
     for PART in $(blkid | grep -i 'f2fs' | awk -F':' '{print $1}'); do
         if resize.f2fs "$PART" 2>/dev/null; then
-            logger -t resize_f2fs "Partition $PART resized successfully"
+            logger -t resize_f2fs "Filesystem $PART resized successfully"
         fi
     done
 
-    touch "$MARKER"
+    touch "$FS_MARKER"
 }
