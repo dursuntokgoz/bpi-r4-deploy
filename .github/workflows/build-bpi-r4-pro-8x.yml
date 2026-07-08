@@ -120,8 +120,17 @@ jobs:
         if: steps.cache-mtk.outputs.cache-hit != 'true'
         run: |
           mkdir -p repo-cache
-          git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds mtk-clone
-          cd mtk-clone && git checkout ${{ env.MTK_COMMIT }} && cd ..
+          # github mirror first (git01.mediatek.com freezes); fall back to git01 if the commit is missing
+          if git init mtk-clone \
+             && git -C mtk-clone remote add origin https://github.com/mediatek/mtk-openwrt-feeds \
+             && git -C mtk-clone fetch --depth=1 origin ${{ env.MTK_COMMIT }} \
+             && git -C mtk-clone checkout FETCH_HEAD; then
+            echo "MTK feed ${{ env.MTK_COMMIT }} fetched from github mirror"
+          else
+            rm -rf mtk-clone
+            git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds mtk-clone
+            git -C mtk-clone checkout ${{ env.MTK_COMMIT }}
+          fi
           tar -czf repo-cache/mtk-openwrt-feeds.tar.gz mtk-clone
           rm -rf mtk-clone
 

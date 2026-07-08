@@ -89,6 +89,34 @@ jobs:
             gettext libncurses-dev libssl-dev python3-distutils python3-setuptools \
             rsync swig unzip zlib1g-dev file wget libelf-dev ccache git
 
+      # Pro builders still consume the MTK feed as a tarball (repo-cache/mtk-openwrt-feeds.tar.gz).
+      # Standard/wired builders clone the feed themselves and ignore MTK_FEED_TARBALL.
+      - name: Restore MTK cache
+        if: startsWith(github.event.inputs.variant, 'pro')
+        id: cache-mtk
+        uses: actions/cache@v4
+        with:
+          path: repo-cache/mtk-openwrt-feeds.tar.gz
+          key: mtk-${{ env.MTK_COMMIT }}
+
+      - name: Clone and cache MTK feeds
+        if: startsWith(github.event.inputs.variant, 'pro') && steps.cache-mtk.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p repo-cache
+          # github mirror first (git01.mediatek.com freezes); fall back to git01 if the commit is missing
+          if git init mtk-clone \
+             && git -C mtk-clone remote add origin https://github.com/mediatek/mtk-openwrt-feeds \
+             && git -C mtk-clone fetch --depth=1 origin ${{ env.MTK_COMMIT }} \
+             && git -C mtk-clone checkout FETCH_HEAD; then
+            echo "MTK feed ${{ env.MTK_COMMIT }} fetched from github mirror"
+          else
+            rm -rf mtk-clone
+            git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds mtk-clone
+            git -C mtk-clone checkout ${{ env.MTK_COMMIT }}
+          fi
+          tar -czf repo-cache/mtk-openwrt-feeds.tar.gz mtk-clone
+          rm -rf mtk-clone
+
       - name: Run builder script
         run: |
           chmod +x ${{ env.BUILDER }}
@@ -97,6 +125,7 @@ jobs:
         env:
           OPENWRT_COMMIT: ${{ env.OPENWRT_COMMIT }}
           MTK_COMMIT: ${{ env.MTK_COMMIT }}
+          MTK_FEED_TARBALL: repo-cache/mtk-openwrt-feeds.tar.gz
 
       - name: Print Build Failure Details
         if: failure()
