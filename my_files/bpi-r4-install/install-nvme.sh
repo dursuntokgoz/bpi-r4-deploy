@@ -288,10 +288,14 @@ partprobe "$NVME_DEV" 2>/dev/null
 sleep 2
 printf "        OK\n\n"
 
-printf "        Repartitioning (p1=256MB, p2=512MB, p3=data)...\n"
+# p2 (production) = 16 GiB (raw FIT + f2fs overlay = system root); the bulk of
+# the disk goes to p3 (data, ext4, LABEL=data) as an upgrade-safe store. 16GiB
+# is generous for a router+docker root yet a tiny fraction of an NVMe. The f2fs
+# overlay is formatted on first boot to fill p2. [16GiB = 33554432 sectors]
+printf "        Repartitioning (p1=256MB, p2=16GiB, p3=data)...\n"
 sgdisk -d 1 -d 2 /dev/nvme0n1
-sgdisk -n 1:2048:526335    -t 1:8300 -c 1:boot       /dev/nvme0n1
-sgdisk -n 2:526336:1576959 -t 2:FFFF -c 2:production /dev/nvme0n1
+sgdisk -n 1:2048:526335     -t 1:8300 -c 1:boot       /dev/nvme0n1
+sgdisk -n 2:526336:34080767 -t 2:FFFF -c 2:production /dev/nvme0n1
 partprobe /dev/nvme0n1
 sleep 2
 printf "        OK\n\n"
