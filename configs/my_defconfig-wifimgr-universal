@@ -512,3 +512,17 @@ CONFIG_TARGET_DEVICE_PACKAGES_mediatek_filogic_DEVICE_bananapi_bpi-r4-nand-8gb="
 CONFIG_PACKAGE_python3=y
 CONFIG_PACKAGE_python3-light=y
 CONFIG_PACKAGE_kmod-iosm-custom=y
+
+# Turkish (tr) LuCI language packs / Turkce LuCI dil paketleri
+CONFIG_PACKAGE_luci-i18n-base-tr=y
+CONFIG_PACKAGE_luci-i18n-dashboard-tr=y
+CONFIG_PACKAGE_luci-i18n-attendedsysupgrade-tr=y
+CONFIG_PACKAGE_luci-i18n-firewall-tr=y
+CONFIG_PACKAGE_luci-i18n-irqbalance-tr=y
+CONFIG_PACKAGE_luci-i18n-ksmbd-tr=y
+CONFIG_PACKAGE_luci-i18n-omcproxy-tr=y
+CONFIG_PACKAGE_luci-i18n-package-manager-tr=y
+CONFIG_PACKAGE_luci-i18n-qos-tr=y
+CONFIG_PACKAGE_luci-i18n-sqm-tr=y
+CONFIG_PACKAGE_luci-i18n-statistics-tr=y
+CONFIG_PACKAGE_luci-i18n-ttyd-tr=y

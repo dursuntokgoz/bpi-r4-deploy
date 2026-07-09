@@ -464,6 +464,10 @@ xmm7360-daemon-full.py --apn internet
 
 Once connected, the `wwan0` interface gets its IP from the carrier; add it to a WAN firewall zone in LuCI as needed. Logs: `/var/log/xmm7360-daemon.log`.
 
+### Turkish LuCI interface
+
+The standard and wired images also ship the **Turkish (tr) LuCI language packs** (`luci-i18n-*-tr`) for the web interface and all bundled apps that provide a Turkish translation (firewall, statistics, SQM, QoS, ksmbd, ttyd, package manager, mwan3 and more). LuCI follows the browser language automatically; to force it, go to **System → Language and Style → Language → Türkçe**.
+
 ---
 
 ## Architecture
@@ -992,6 +996,10 @@ xmm7360-daemon-full.py --apn internet
 ```
 
 Bağlantı kurulduğunda `wwan0` arayüzü IP adresini operatörden alır; gerekirse LuCI üzerinden bir WAN firewall bölgesine ekleyin. Loglar: `/var/log/xmm7360-daemon.log`.
+
+### Türkçe LuCI arayüzü
+
+Standard ve wired imajları, web arayüzü ve Türkçe çevirisi bulunan tüm paketler için **Türkçe (tr) LuCI dil paketlerini** (`luci-i18n-*-tr`) de içerir (firewall, statistics, SQM, QoS, ksmbd, ttyd, paket yöneticisi, mwan3 ve daha fazlası). LuCI, tarayıcı dilini otomatik takip eder; elle seçmek için **System → Language and Style → Language → Türkçe** yolunu kullanın.
 
 ---
 
