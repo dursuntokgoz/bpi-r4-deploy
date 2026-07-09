@@ -56,6 +56,9 @@ jobs:
         run: |
           VARIANT="${{ github.event.inputs.variant }}"
 
+          # Unique per-build timestamp (Europe/Istanbul) — used for archive release tags
+          echo "BUILD_TS=$(TZ=Europe/Istanbul date +%Y%m%d-%H%M)" >> $GITHUB_ENV
+
           if [ "$VARIANT" = "wired" ]; then
             echo "BUILDER=./builder-wired-universal.sh" >> $GITHUB_ENV
             echo "RELEASE_TAGS=release-4gb-wired release-4gb-poe-wired release-8gb-wired release-8gb-poe-wired release-8gb-wired-unifi release-8gb-poe-wired-unifi" >> $GITHUB_ENV
@@ -493,5 +496,36 @@ jobs:
           gh release create release-pro-8x-unifi rel-pro-unifi/* \
             --title "BPI-R4 Pro 8X wired UniFi (latest)" \
             --notes "Variant: wired (no WiFi) | RAM: 8GB | BPI-R4 Pro 8X | UniFi stack | Commit: ${{ github.event.inputs.repo_commit || github.sha }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Timestamped archive releases: every build additionally publishes an
+      # immutable "archive-<variant>-<YYYYMMDD-HHMM>" release, so previous
+      # builds are never overwritten and can be rolled back to. The fixed
+      # "release-*" (latest) tags above stay untouched — install scripts in
+      # already-flashed images keep downloading from them.
+      - name: Publish timestamped archive releases
+        run: |
+          VARIANT="${{ github.event.inputs.variant }}"
+          case "$VARIANT" in
+            standard)  DIRS="rel-4gb rel-4gb-poe rel-8gb rel-8gb-poe" ;;
+            wired)     DIRS="rel-4gb-wired rel-4gb-poe-wired rel-8gb-wired rel-8gb-poe-wired rel-8gb-unifi rel-8gb-poe-unifi" ;;
+            pro)       DIRS="rel-pro" ;;
+            pro-wired) DIRS="rel-pro-wired rel-pro-unifi" ;;
+            *)         DIRS="" ;;
+          esac
+
+          for DIR in $DIRS; do
+            [ -d "$DIR" ] || continue
+            NAME="${DIR#rel-}"
+            TAG="archive-${NAME}-${{ env.BUILD_TS }}"
+            echo "Publishing archive release: $TAG"
+            gh release create "$TAG" "$DIR"/* \
+              --target "${{ github.sha }}" \
+              --title "Archive ${NAME} ${{ env.BUILD_TS }}" \
+              --notes "Snapshot of build ${{ env.BUILD_TS }} (Europe/Istanbul) | Variant: $VARIANT | Commit: ${{ github.event.inputs.repo_commit || github.sha }}
+
+          This is an immutable archive of a single build. For the current build always use the matching \`release-*\` (latest) tag."
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

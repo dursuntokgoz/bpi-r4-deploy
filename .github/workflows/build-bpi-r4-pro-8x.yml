@@ -50,6 +50,9 @@ jobs:
         run: |
           VARIANT="${{ github.event.inputs.variant }}"
 
+          # Unique per-build timestamp (Europe/Istanbul) — used for archive release tags
+          echo "BUILD_TS=$(TZ=Europe/Istanbul date +%Y%m%d-%H%M)" >> $GITHUB_ENV
+
           if [ "$VARIANT" = "Pro-8X-wifi" ]; then
             echo "BUILDER=./builder-pro-8x.sh" >> $GITHUB_ENV
             echo "RELEASE_TAGS=release-pro-8x-standard" >> $GITHUB_ENV
@@ -197,5 +200,29 @@ jobs:
           gh release create release-pro-8x-wired rel-pro/* \
             --title "BPI-R4 Pro 8X wired (latest)" \
             --notes "Variant: wired (no wifimgr) | RAM: 8GB | BPI-R4 Pro 8X | Commit: ${{ github.event.inputs.repo_commit || github.sha }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Timestamped archive release: every build additionally publishes an
+      # immutable "archive-pro-8x-*-<YYYYMMDD-HHMM>" release, so previous
+      # builds are never overwritten and can be rolled back to. The fixed
+      # "release-pro-8x-*" (latest) tags above stay untouched — install
+      # scripts in already-flashed images keep downloading from them.
+      - name: Publish timestamped archive release
+        run: |
+          VARIANT="${{ github.event.inputs.variant }}"
+          if [ "$VARIANT" = "Pro-8X-wifi" ]; then
+            NAME="pro-8x-standard"
+          else
+            NAME="pro-8x-wired"
+          fi
+          TAG="archive-${NAME}-${{ env.BUILD_TS }}"
+          echo "Publishing archive release: $TAG"
+          gh release create "$TAG" rel-pro/* \
+            --target "${{ github.sha }}" \
+            --title "Archive ${NAME} ${{ env.BUILD_TS }}" \
+            --notes "Snapshot of build ${{ env.BUILD_TS }} (Europe/Istanbul) | Variant: $VARIANT | Commit: ${{ github.event.inputs.repo_commit || github.sha }}
+
+          This is an immutable archive of a single build. For the current build always use the matching \`release-pro-8x-*\` (latest) tag."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
