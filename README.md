@@ -6,6 +6,9 @@ Complete install system that runs entirely on GitHub — no Linux machine needed
 
 > **Tested hardware:** Banana Pi R4 rev 1.0 (4GB) · Banana Pi R4 rev 1.1 (8GB) · Banana Pi R4 Pro 8X · UniFi G5 Flex camera · UniFi U7-LR WiFi 7 AP
 
+> 🇬🇧 **This fork** additionally ships built-in support for **Fibocom / Intel XMM7360-based LTE (GSM) modems** — see [Fork additions — Fibocom / Intel LTE modem support](#fork-additions--fibocom--intel-lte-modem-support).
+> 🇹🇷 **Bu fork**, ayrıca **Fibocom / Intel XMM7360 tabanlı LTE (GSM) modemler** için yerleşik destek içerir — bkz. [Fork eklentileri — Fibocom / Intel LTE modem desteği](#fork-additions--fibocom--intel-lte-modem-support).
+
 ---
 
 ## Contents
@@ -26,6 +29,7 @@ Complete install system that runs entirely on GitHub — no Linux machine needed
   - [Switching between NAND and NVMe](#switching-between-nand-and-nvme)
 - [Part D — BPI-R4 Pro 8X: UniFi stack](#part-d--bpi-r4-pro-8x-unifi-stack)
 - [Part E — Fork and customize](#part-e--fork-and-customize)
+- [Fork additions — Fibocom / Intel LTE modem support](#fork-additions--fibocom--intel-lte-modem-support)
 - [Architecture](#architecture)
 - [NVMe partition layout](#nvme-partition-layout)
 - [Hardware notes](#hardware-notes)
@@ -417,6 +421,53 @@ Fork this repository to build your own customized release.
 4. After ~2 hours, releases appear in your fork.
 
 To install from your fork, edit `GH_USER` at the top of the install scripts.
+
+---
+
+## Fork additions — Fibocom / Intel LTE modem support
+
+> 🇬🇧 **English** — This fork (`dursuntokgoz/bpi-r4-deploy`) extends the upstream project with built-in support for **Intel XMM7360 / XMM7560-based M.2 LTE (GSM) modems**, such as the **Fibocom L850-GL** (XMM7360) and **Fibocom L860-GL** (XMM7560). All build variants (standard, wired, Pro 8X, Pro 8X wired) include the components below out of the box. Install the modem in an M.2 **B-key** slot (CN15/CN18 on Pro 8X) with a SIM inserted.
+>
+> 🇹🇷 **Türkçe** — Bu fork (`dursuntokgoz/bpi-r4-deploy`), upstream projeye **Intel XMM7360 / XMM7560 tabanlı M.2 LTE (GSM) modemler** için yerleşik destek ekler — örneğin **Fibocom L850-GL** (XMM7360) ve **Fibocom L860-GL** (XMM7560). Tüm build varyantları (standard, wired, Pro 8X, Pro 8X wired) aşağıdaki bileşenleri hazır olarak içerir. Modemi, SIM takılı şekilde M.2 **B-key** yuvasına (Pro 8X'te CN15/CN18) takın.
+
+### What's included / Neler içerir
+
+#### `kmod-iosm-custom` — Intel IOSM WWAN driver / sürücüsü
+
+🇬🇧 Custom build of the Intel IOSM (IPC over Shared Memory) PCIe WWAN driver, kept in sync with the target kernel (6.12.x) and carrying an ARM64 fix (`iowrite64_lo_hi`) that prevents alignment faults on the MT7988A SoC. The module (`iosm.ko`) loads automatically at boot, binds to PCI IDs `8086:7360` and `8086:7560`, and exposes the `/dev/wwan0*` control ports plus the `wwan0` network interface.
+
+🇹🇷 Intel IOSM (IPC over Shared Memory) PCIe WWAN sürücüsünün özel derlemesi; hedef kernel (6.12.x) ile senkron tutulur ve MT7988A SoC üzerinde hizalama hatalarını (alignment fault) önleyen ARM64 düzeltmesi (`iowrite64_lo_hi`) içerir. Modül (`iosm.ko`) açılışta otomatik yüklenir, `8086:7360` ve `8086:7560` PCI kimliklerine bağlanır; `/dev/wwan0*` kontrol portlarını ve `wwan0` ağ arayüzünü sağlar.
+
+#### `xmm7360-daemon-full.py` — connection daemon / bağlantı daemon'u
+
+🇬🇧 Python 3 connection daemon (`/usr/bin/xmm7360-daemon-full.py`) for XMM7360 modems. It speaks the modem's RPC protocol over `/dev/wwan0xmmrpc0` (or `/dev/xmm0/rpc`), configures the APN, brings up `wwan0`, auto-reconnects on failure, and logs to `/var/log/xmm7360-daemon.log`. The images include `python3` / `python3-light` to run it.
+
+🇹🇷 XMM7360 modemler için Python 3 bağlantı daemon'u (`/usr/bin/xmm7360-daemon-full.py`). `/dev/wwan0xmmrpc0` (veya `/dev/xmm0/rpc`) üzerinden modemin RPC protokolüyle konuşur, APN'i yapılandırır, `wwan0` arayüzünü ayağa kaldırır, hata durumunda otomatik yeniden bağlanır ve `/var/log/xmm7360-daemon.log` dosyasına log yazar. İmajlar, daemon'u çalıştırmak için `python3` / `python3-light` paketlerini içerir.
+
+#### `xmm2usb` — PCIe → USB mode switch / mod geçişi
+
+🇬🇧 Helper script (`/usr/bin/xmm2usb`) that switches an XMM7360 modem from PCIe to USB mode: it locates the modem (PCI `8086:7360`), disables the PCIe link via `setpci`, and issues an ACPI `_RST` through the `acpi_call` module. Useful when you prefer to drive the modem over USB instead of the PCIe/IOSM stack.
+
+🇹🇷 XMM7360 modemi PCIe modundan USB moduna geçiren yardımcı betik (`/usr/bin/xmm2usb`): modemi bulur (PCI `8086:7360`), `setpci` ile PCIe bağlantısını devre dışı bırakır ve `acpi_call` modülü üzerinden ACPI `_RST` komutu gönderir. Modemi PCIe/IOSM yığını yerine USB üzerinden kullanmak istediğinizde işe yarar.
+
+### Quick start / Hızlı başlangıç
+
+```
+# 1) Verify the modem is detected / Modemin algılandığını doğrulayın:
+lspci | grep -i 7360        # or/veya: dmesg | grep -i iosm
+
+# 2) Connect with your carrier's APN / Operatörünüzün APN'i ile bağlanın:
+xmm7360-daemon-full.py --apn internet
+
+# Options / Seçenekler:
+#   --apn <apn>       APN to use / Kullanılacak APN
+#   --no-reconnect    Disable auto-reconnect / Otomatik yeniden bağlanmayı kapatır
+#   --debug           Verbose logging / Ayrıntılı log
+```
+
+🇬🇧 Once connected, the `wwan0` interface gets its IP from the carrier; add it to a WAN firewall zone in LuCI as needed. Logs: `/var/log/xmm7360-daemon.log`.
+
+🇹🇷 Bağlantı kurulduğunda `wwan0` arayüzü IP adresini operatörden alır; gerekirse LuCI üzerinden bir WAN firewall bölgesine ekleyin. Loglar: `/var/log/xmm7360-daemon.log`.
 
 ---
 
