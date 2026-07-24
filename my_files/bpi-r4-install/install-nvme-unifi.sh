@@ -225,7 +225,7 @@ case "$USE_LOCAL" in
     *)
         printf "\n"
         printf "  Use default release or your own fork?\n"
-        printf "  [1] Default (woziwrt/bpi-r4-deploy)\n"
+        printf "  [1] Default (%s/%s)\n" "$GH_USER" "$GH_REPO"
         printf "  [2] My fork (same repo name, different username)\n"
         printf "\n"
         printf "  Select [1/2]: "
@@ -319,6 +319,7 @@ if [ -n "$MOUNTED" ]; then
 fi
 
 printf "        Wiping NVMe disk...\n"
+sgdisk --zap-all "$NVME_DEV" 2>/dev/null || true
 wipefs -a "$NVME_DEV" 2>/dev/null || true
 dd if=/dev/zero of="$NVME_DEV" bs=1M count=100 conv=fsync
 sync

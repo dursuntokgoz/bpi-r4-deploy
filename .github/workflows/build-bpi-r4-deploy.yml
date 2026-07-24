@@ -1,3 +1,7 @@
+# Build base (default when no commit inputs given) — keep in sync with the builder scripts:
+#   OpenWrt:  6dead2869209f4ff9825f3169c129c5ef04f6273  (openwrt-25.12 HEAD, 2026-06-28)
+#   MTK SDK:  13f39a7448764466f0ab5eb290fdefd9a9d2335b  (github git01 HEAD, 2026-06-28)
+# Bumped 2026-06-28, HW verified on both routers (prev base 7b8ce1e / 42c9ff = 6.12.93).
 name: Build BPI-R4 Deploy
 
 on:
@@ -44,13 +48,16 @@ jobs:
 
       - name: Load build versions
         run: |
-          cat build-versions.env >> $GITHUB_ENV
+          grep -v '^\s*#' build-versions.env | grep -v '^\s*$' >> $GITHUB_ENV
           [ -n "${{ github.event.inputs.openwrt_commit }}" ] && echo "OPENWRT_COMMIT=${{ github.event.inputs.openwrt_commit }}" >> $GITHUB_ENV || true
           [ -n "${{ github.event.inputs.mtk_commit }}" ] && echo "MTK_COMMIT=${{ github.event.inputs.mtk_commit }}" >> $GITHUB_ENV || true
 
       - name: Set build variables
         run: |
           VARIANT="${{ github.event.inputs.variant }}"
+
+          # Unique per-build timestamp (Europe/Istanbul) — used for archive release tags
+          echo "BUILD_TS=$(TZ=Europe/Istanbul date +%Y%m%d-%H%M)" >> $GITHUB_ENV
 
           if [ "$VARIANT" = "wired" ]; then
             echo "BUILDER=./builder-wired-universal.sh" >> $GITHUB_ENV
@@ -63,40 +70,8 @@ jobs:
             echo "RELEASE_TAGS=release-pro-8x-wired release-pro-8x-unifi" >> $GITHUB_ENV
           else
             echo "BUILDER=./builder-wifimgr-universal.sh" >> $GITHUB_ENV
-            echo "RELEASE_TAGS=release-4gb-standard release-4gb-poe release-8gb-standard release-8gb-poe" >> $GITHUB_ENV
+            echo "RELEASE_TAGS=release-4gb-standard release-4gb-poe release-8gb-standard release-8gb-poe release-sdk" >> $GITHUB_ENV
           fi
-
-      - name: Delete existing releases and tags
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const tags = process.env.RELEASE_TAGS.split(' ');
-
-            const releases = await github.rest.repos.listReleases({
-              owner,
-              repo,
-              per_page: 100
-            });
-
-            for (const tag of tags) {
-              for (const rel of releases.data) {
-                if (rel.tag_name === tag) {
-                  await github.rest.repos.deleteRelease({
-                    owner,
-                    repo,
-                    release_id: rel.id
-                  }).catch(e => console.log(`Failed to delete release ${rel.id}: ${e.message}`));
-                }
-              }
-              await github.rest.git.deleteRef({
-                owner,
-                repo,
-                ref: `tags/${tag}`
-              }).catch(e => console.log(`Failed to delete tag ${tag}: ${e.message}`));
-            }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Free disk space on runner
         uses: jlumbroso/free-disk-space@main
@@ -117,7 +92,10 @@ jobs:
             gettext libncurses-dev libssl-dev python3-distutils python3-setuptools \
             rsync swig unzip zlib1g-dev file wget libelf-dev ccache git
 
+      # Pro builders still consume the MTK feed as a tarball (repo-cache/mtk-openwrt-feeds.tar.gz).
+      # Standard/wired builders clone the feed themselves and ignore MTK_FEED_TARBALL.
       - name: Restore MTK cache
+        if: startsWith(github.event.inputs.variant, 'pro')
         id: cache-mtk
         uses: actions/cache@v4
         with:
@@ -125,11 +103,20 @@ jobs:
           key: mtk-${{ env.MTK_COMMIT }}
 
       - name: Clone and cache MTK feeds
-        if: steps.cache-mtk.outputs.cache-hit != 'true'
+        if: startsWith(github.event.inputs.variant, 'pro') && steps.cache-mtk.outputs.cache-hit != 'true'
         run: |
           mkdir -p repo-cache
-          git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds mtk-clone
-          cd mtk-clone && git checkout ${{ env.MTK_COMMIT }} && cd ..
+          # github mirror first (git01.mediatek.com freezes); fall back to git01 if the commit is missing
+          if git init mtk-clone \
+             && git -C mtk-clone remote add origin https://github.com/mediatek/mtk-openwrt-feeds \
+             && git -C mtk-clone fetch --depth=1 origin ${{ env.MTK_COMMIT }} \
+             && git -C mtk-clone checkout FETCH_HEAD; then
+            echo "MTK feed ${{ env.MTK_COMMIT }} fetched from github mirror"
+          else
+            rm -rf mtk-clone
+            git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds mtk-clone
+            git -C mtk-clone checkout ${{ env.MTK_COMMIT }}
+          fi
           tar -czf repo-cache/mtk-openwrt-feeds.tar.gz mtk-clone
           rm -rf mtk-clone
 
@@ -190,7 +177,7 @@ jobs:
               "openwrt-mediatek-filogic-bananapi_bpi-r4-nvme-img.bin" \
               "openwrt-mediatek-filogic-bananapi_bpi-r4-sdcard.img.gz" \
               "openwrt-mediatek-filogic-bananapi_bpi-r4-emmc-img.bin" \
-              "openwrt-mediatek-filogic-bananapi_bpi-r4-snand-img.bin"
+              "openwrt-mediatek-filogic-bananapi_bpi-r4-nand-snand-img.bin"
 
             # 4GB PoE
             make_release_dir rel-4gb-poe \
@@ -199,7 +186,7 @@ jobs:
               "openwrt-mediatek-filogic-bananapi_bpi-r4-poe-nvme-img.bin" \
               "openwrt-mediatek-filogic-bananapi_bpi-r4-poe-sdcard.img.gz" \
               "openwrt-mediatek-filogic-bananapi_bpi-r4-poe-emmc-img.bin" \
-              "openwrt-mediatek-filogic-bananapi_bpi-r4-poe-snand-img.bin"
+              "openwrt-mediatek-filogic-bananapi_bpi-r4-nand-snand-img.bin"
 
             # 8GB non-poe
             make_release_dir rel-8gb \
@@ -208,7 +195,7 @@ jobs:
               "openwrt-mediatek-filogic-bananapi_bpi-r4-8gb-nvme-img.bin" \
               "openwrt-mediatek-filogic-bananapi_bpi-r4-8gb-sdcard.img.gz" \
               "openwrt-mediatek-filogic-bananapi_bpi-r4-8gb-emmc-img.bin" \
-              "openwrt-mediatek-filogic-bananapi_bpi-r4-8gb-snand-img.bin"
+              "openwrt-mediatek-filogic-bananapi_bpi-r4-nand-8gb-snand-img.bin"
 
             # 8GB PoE
             make_release_dir rel-8gb-poe \
@@ -217,7 +204,7 @@ jobs:
               "openwrt-mediatek-filogic-bananapi_bpi-r4-poe-8gb-nvme-img.bin" \
               "openwrt-mediatek-filogic-bananapi_bpi-r4-poe-8gb-sdcard.img.gz" \
               "openwrt-mediatek-filogic-bananapi_bpi-r4-poe-8gb-emmc-img.bin" \
-              "openwrt-mediatek-filogic-bananapi_bpi-r4-poe-8gb-snand-img.bin"
+              "openwrt-mediatek-filogic-bananapi_bpi-r4-nand-8gb-snand-img.bin"
           fi
 
           # Pro variants
@@ -269,6 +256,40 @@ jobs:
             done
           fi
 
+      # Atomic release: delete old releases/tags only AFTER a successful build +
+      # artifact prep, so a build failure leaves the existing releases intact.
+      - name: Delete existing releases and tags
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const tags = process.env.RELEASE_TAGS.split(' ');
+
+            const releases = await github.rest.repos.listReleases({
+              owner,
+              repo,
+              per_page: 100
+            });
+
+            for (const tag of tags) {
+              for (const rel of releases.data) {
+                if (rel.tag_name === tag) {
+                  await github.rest.repos.deleteRelease({
+                    owner,
+                    repo,
+                    release_id: rel.id
+                  }).catch(e => console.log(`Failed to delete release ${rel.id}: ${e.message}`));
+                }
+              }
+              await github.rest.git.deleteRef({
+                owner,
+                repo,
+                ref: `tags/${tag}`
+              }).catch(e => console.log(`Failed to delete tag ${tag}: ${e.message}`));
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish luci-app-wifimgr APK
         if: github.event.inputs.variant == 'standard'
         run: |
@@ -291,6 +312,28 @@ jobs:
 
             Built from commit: ${{ github.event.inputs.repo_commit || github.sha }}
           files: ${{ env.APK_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release-sdk
+        if: github.event.inputs.variant == 'standard'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: release-sdk
+          name: "OpenWrt SDK (latest)"
+          body: |
+            OpenWrt SDK for mediatek/filogic (aarch64_cortex-a53) — compile custom packages for this firmware without building the whole tree.
+
+            Covers all BPI-R4 variants including Pro 8X (same target/arch). Userspace packages only; kernel modules need a kernel-matched SDK.
+
+            ```
+            tar xf openwrt-sdk-*.tar.zst && cd openwrt-sdk-*
+            ./scripts/feeds update -a && ./scripts/feeds install <pkg>
+            make package/<pkg>/compile V=s
+            ```
+
+            Commit: ${{ github.event.inputs.repo_commit || github.sha }}
+          files: openwrt/bin/targets/mediatek/filogic/openwrt-sdk-*.tar.zst
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -453,5 +496,36 @@ jobs:
           gh release create release-pro-8x-unifi rel-pro-unifi/* \
             --title "BPI-R4 Pro 8X wired UniFi (latest)" \
             --notes "Variant: wired (no WiFi) | RAM: 8GB | BPI-R4 Pro 8X | UniFi stack | Commit: ${{ github.event.inputs.repo_commit || github.sha }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Timestamped archive releases: every build additionally publishes an
+      # immutable "archive-<variant>-<YYYYMMDD-HHMM>" release, so previous
+      # builds are never overwritten and can be rolled back to. The fixed
+      # "release-*" (latest) tags above stay untouched — install scripts in
+      # already-flashed images keep downloading from them.
+      - name: Publish timestamped archive releases
+        run: |
+          VARIANT="${{ github.event.inputs.variant }}"
+          case "$VARIANT" in
+            standard)  DIRS="rel-4gb rel-4gb-poe rel-8gb rel-8gb-poe" ;;
+            wired)     DIRS="rel-4gb-wired rel-4gb-poe-wired rel-8gb-wired rel-8gb-poe-wired rel-8gb-unifi rel-8gb-poe-unifi" ;;
+            pro)       DIRS="rel-pro" ;;
+            pro-wired) DIRS="rel-pro-wired rel-pro-unifi" ;;
+            *)         DIRS="" ;;
+          esac
+
+          for DIR in $DIRS; do
+            [ -d "$DIR" ] || continue
+            NAME="${DIR#rel-}"
+            TAG="archive-${NAME}-${{ env.BUILD_TS }}"
+            echo "Publishing archive release: $TAG"
+            gh release create "$TAG" "$DIR"/* \
+              --target "${{ github.sha }}" \
+              --title "Archive ${NAME} ${{ env.BUILD_TS }}" \
+              --notes "Snapshot of build ${{ env.BUILD_TS }} (Europe/Istanbul) | Variant: $VARIANT | Commit: ${{ github.event.inputs.repo_commit || github.sha }}
+
+          This is an immutable archive of a single build. For the current build always use the matching \`release-*\` (latest) tag."
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
