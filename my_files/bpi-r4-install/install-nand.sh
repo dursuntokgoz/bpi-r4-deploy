@@ -4,7 +4,7 @@
 # to install eMMC/NVMe (eMMC shares its controller with SD, so eMMC/NVMe can
 # only be installed from NAND).
 
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -102,7 +102,7 @@ case "$USE_LOCAL" in
     *)
         printf "\n"
         printf "  Use default release or your own fork?\n"
-        printf "  [1] Default (woziwrt/bpi-r4-deploy)\n"
+        printf "  [1] Default (%s/%s)\n" "$GH_USER" "$GH_REPO"
         printf "  [2] My fork (same repo name, different username)\n"
         printf "\n"
         printf "  Select [1/2]: "
