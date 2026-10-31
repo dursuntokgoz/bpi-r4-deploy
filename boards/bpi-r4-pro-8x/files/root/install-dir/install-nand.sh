@@ -12,7 +12,7 @@
 
 set -e
 
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 GH_TAG="release-pro-8x-standard"   # default; overridden by the variant menu below
 SNAND_NAME="openwrt-mediatek-filogic-bananapi_bpi-r4-pro-8x-snand-img.bin"

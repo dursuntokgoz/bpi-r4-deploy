@@ -56,6 +56,10 @@ add_common_tree_patches() {
 }
 
 add_packages() {
+	if [ -d "$REPO/common/packages/kmod-iosm-custom" ]; then
+		mkdir -p package/kernel/iosm-custom
+		\cp -r "$REPO/common/packages/kmod-iosm-custom/." package/kernel/iosm-custom/
+	fi
 	\cp -r "$REPO/common/packages/sms-tool/" feeds/packages/utils/sms-tool
 	\cp -r "$REPO/common/packages/modemdata-main/" feeds/packages/utils/modemdata
 	\cp -r "$REPO/common/packages/luci-app-modemdata-main/luci-app-modemdata/" feeds/luci/applications
@@ -68,6 +72,7 @@ add_files() {
 	mkdir -p files
 	\cp -R "$REPO/common/files/." files/
 	\cp -R "$REPO/boards/$BOARD/files/." files/
+	chmod +x files/usr/bin/* 2>/dev/null || true
 }
 
 add_after_feeds() {
@@ -84,4 +89,31 @@ add_config() {
 	echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-emmc-comb-4bg=y" >> .config
 	echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-sdmmc-comb-4bg=y" >> .config
 	echo "CONFIG_PACKAGE_trusted-firmware-a-mt7988-spim-nand-ubi-comb-4bg=y" >> .config
+
+	# Fibocom L850-GL / Intel XMM7360 LTE modem support
+	echo "CONFIG_PACKAGE_kmod-iosm-custom=y" >> .config
+	echo "CONFIG_PACKAGE_kmod-wwan=y" >> .config
+	echo "CONFIG_PACKAGE_python3=y" >> .config
+	echo "CONFIG_PACKAGE_python3-light=y" >> .config
+
+	# Turkish (tr) translations for LuCI
+	echo "CONFIG_LUCI_LANG_tr=y" >> .config
+
+	# Extra management, diagnostic, storage & serial console tools
+	echo "CONFIG_PACKAGE_luci-ssl=y" >> .config
+	echo "CONFIG_PACKAGE_openssh-sftp-server=y" >> .config
+	echo "CONFIG_PACKAGE_nano=y" >> .config
+	echo "CONFIG_PACKAGE_nvme-cli=y" >> .config
+	echo "CONFIG_PACKAGE_smartmontools=y" >> .config
+	echo "CONFIG_PACKAGE_watchcat=y" >> .config
+	echo "CONFIG_PACKAGE_luci-app-watchcat=y" >> .config
+	echo "CONFIG_PACKAGE_vnstat2=y" >> .config
+	echo "CONFIG_PACKAGE_luci-app-vnstat2=y" >> .config
+	echo "CONFIG_PACKAGE_mtr-json=y" >> .config
+	echo "CONFIG_PACKAGE_bind-dig=y" >> .config
+	echo "CONFIG_PACKAGE_zram-swap=y" >> .config
+	echo "CONFIG_PACKAGE_usb-modeswitch=y" >> .config
+	echo "CONFIG_PACKAGE_picocom=y" >> .config
+	echo "CONFIG_PACKAGE_minicom=y" >> .config
+	echo "CONFIG_PACKAGE_screen=y" >> .config
 }

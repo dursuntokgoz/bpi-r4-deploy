@@ -2,7 +2,7 @@
 # BPI-R4 Pro 8X - Install OpenWrt to NVMe
 # Must be run from NAND rescue system only!
 
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 ITB_NAME="bpi-r4-pro-8x.itb"
 RED='\033[0;31m'

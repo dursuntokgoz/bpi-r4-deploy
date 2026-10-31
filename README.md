@@ -572,3 +572,80 @@ Problems with images built from a modified fork are hard for us to reproduce —
 *This project is not affiliated with Ubiquiti Inc. in any way.*
 
 *🍌 TEAM WOZIWRT+CLAUDE*
+
+---
+
+## Fork additions — Fibocom / Intel LTE modem support
+
+This fork (`dursuntokgoz/bpi-r4-deploy`) extends the upstream project with built-in support for **Intel XMM7360 / XMM7560-based M.2 LTE (GSM) modems**, such as the **Fibocom L850-GL** (XMM7360) and **Fibocom L860-GL** (XMM7560). All build variants (standard, wired) include the components below out of the box. Install the modem in an M.2 **B-key** slot with a SIM inserted.
+
+### What's included
+
+#### `kmod-iosm-custom` — Intel IOSM WWAN driver
+
+Custom build of the Intel IOSM (IPC over Shared Memory) PCIe WWAN driver, kept in sync with the target kernel (6.12.x) and carrying an ARM64 fix (`iowrite64_lo_hi`) that prevents alignment faults on the MT7988A SoC. The module (`iosm.ko`) loads automatically at boot, binds to PCI IDs `8086:7360` and `8086:7560`, and exposes the `/dev/wwan0*` control ports plus the `wwan0` network interface.
+
+#### `xmm7360-daemon-full.py` — connection daemon
+
+Python 3 connection daemon (`/usr/bin/xmm7360-daemon-full.py`) for XMM7360 modems. It speaks the modem's RPC protocol over `/dev/wwan0xmmrpc0` (or `/dev/xmm0/rpc`), configures the APN, brings up `wwan0`, auto-reconnects on failure, and logs to `/var/log/xmm7360-daemon.log`. The images include `python3` / `python3-light` to run it.
+
+#### `xmm2usb` — PCIe → USB mode switch
+
+Helper script (`/usr/bin/xmm2usb`) that switches an XMM7360 modem from PCIe to USB mode: it locates the modem (PCI `8086:7360`), disables the PCIe link via `setpci`, and issues an ACPI `_RST` through the `acpi_call` module. Useful when you prefer to drive the modem over USB instead of the PCIe/IOSM stack.
+
+### Quick start
+
+```bash
+# 1) Verify the modem is detected:
+lspci | grep -i 7360        # or: dmesg | grep -i iosm
+
+# 2) Connect with your carrier's APN:
+xmm7360-daemon-full.py --apn internet
+
+# Options:
+#   --apn <apn>       APN to use
+#   --no-reconnect    Disable auto-reconnect
+#   --debug           Verbose logging
+```
+
+Once connected, the `wwan0` interface gets its IP from the carrier; add it to a WAN firewall zone in LuCI as needed. Logs: `/var/log/xmm7360-daemon.log`.
+
+### Turkish LuCI interface
+
+The standard and wired images also ship the **Turkish (tr) LuCI language packs** (`luci-i18n-*-tr`) for the web interface and all bundled apps that provide a Turkish translation (firewall, statistics, SQM, QoS, ksmbd, ttyd, package manager, mwan3 and more). LuCI follows the browser language automatically; to force it, go to **System → Language and Style → Language → Türkçe**.
+
+---
+
+# Türkçe
+
+## Fork eklentileri — Fibocom / Intel LTE modem desteği
+
+Bu fork (`dursuntokgoz/bpi-r4-deploy`), upstream projeye **Intel XMM7360 / XMM7560 tabanlı M.2 LTE (GSM) modemler** için yerleşik destek ekler — örneğin **Fibocom L850-GL** (XMM7360) ve **Fibocom L860-GL** (XMM7560). Tüm build varyantları (standard, wired) aşağıdaki bileşenleri hazır olarak içerir. Modemi, SIM takılı şekilde M.2 **B-key** yuvasına takın.
+
+### Neler içerir
+
+#### `kmod-iosm-custom` — Intel IOSM WWAN sürücüsü
+
+Intel IOSM (IPC over Shared Memory) PCIe WWAN sürücüsünün özel derlemesi; hedef kernel (6.12.x) ile senkron tutulur ve MT7988A SoC üzerinde hizalama hatalarını (alignment fault) önleyen ARM64 düzeltmesi (`iowrite64_lo_hi`) içerir. Modül (`iosm.ko`) açılışta otomatik yüklenir, `8086:7360` ve `8086:7560` PCI kimliklerine bağlanır; `/dev/wwan0*` kontrol portlarını ve `wwan0` ağ arayüzünü sağlar.
+
+#### `xmm7360-daemon-full.py` — bağlantı daemon'u
+
+XMM7360 modemler için Python 3 bağlantı daemon'u (`/usr/bin/xmm7360-daemon-full.py`). `/dev/wwan0xmmrpc0` (veya `/dev/xmm0/rpc`) üzerinden modemin RPC protokolüyle konuşur, APN'i yapılandırır, `wwan0` arayüzünü ayağa kaldırır, hata durumunda otomatik yeniden bağlanır ve `/var/log/xmm7360-daemon.log` dosyasına log yazar. İmajlar, daemon'u çalıştırmak için `python3` / `python3-light` paketlerini içerir.
+
+#### `xmm2usb` — PCIe → USB mod geçişi
+
+XMM7360 modemi PCIe modundan USB moduna geçiren yardımcı betik (`/usr/bin/xmm2usb`): modemi bulur (PCI `8086:7360`), `setpci` ile PCIe bağlantısını devre dışı bırakır ve `acpi_call` modülü üzerinden ACPI `_RST` komutu gönderir.
+
+### Hızlı başlangıç
+
+```bash
+# 1) Modemin algılandığını doğrulayın:
+lspci | grep -i 7360        # veya: dmesg | grep -i iosm
+
+# 2) Operatörünüzün APN'i ile bağlanın:
+xmm7360-daemon-full.py --apn internet
+```
+
+### Türkçe LuCI arayüzü
+
+Standard ve wired imajları, web arayüzü ve Türkçe çevirisi bulunan tüm paketler için **Türkçe (tr) LuCI dil paketlerini** (`luci-i18n-*-tr`) içerir. Tarayıcı dilini takip eder veya **System → Language and Style → Language → Türkçe** yolundan seçilebilir.

@@ -4,7 +4,7 @@
 
 NVME_DEV="/dev/nvme0n1"
 IS_PRO=1
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 GH_TAG="release-pro-8x-standard"   # default; overridden by the variant menu below
 ITB_NAME="bpi-r4-pro-8x.itb"

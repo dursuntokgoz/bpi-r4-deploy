@@ -4,7 +4,7 @@
 # to install eMMC/NVMe (eMMC shares its controller with SD, so eMMC/NVMe can
 # only be installed from NAND).
 
-GH_USER="woziwrt"
+GH_USER="dursuntokgoz"
 GH_REPO="bpi-r4-deploy"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
